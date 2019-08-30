@@ -2,9 +2,9 @@ package it.intesys.nbaiocco.service.mapper;
 
 
 import it.intesys.nbaiocco.JhipsterInfinispanApp;
+import it.intesys.nbaiocco.config.TestSecurityConfiguration;
 import it.intesys.nbaiocco.domain.User;
 import it.intesys.nbaiocco.service.dto.UserDTO;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,11 +20,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * Integration tests for {@link UserMapper}.
  */
-@SpringBootTest(classes = JhipsterInfinispanApp.class)
+@SpringBootTest(classes = {JhipsterInfinispanApp.class, TestSecurityConfiguration.class})
 public class UserMapperIT {
 
     private static final String DEFAULT_LOGIN = "johndoe";
-    private static final Long DEFAULT_ID = 1L;
+    private static final String DEFAULT_ID = "id1";
 
     @Autowired
     private UserMapper userMapper;
@@ -36,7 +36,6 @@ public class UserMapperIT {
     public void init() {
         user = new User();
         user.setLogin(DEFAULT_LOGIN);
-        user.setPassword(RandomStringUtils.random(60));
         user.setActivated(true);
         user.setEmail("johndoe@localhost");
         user.setFirstName("john");

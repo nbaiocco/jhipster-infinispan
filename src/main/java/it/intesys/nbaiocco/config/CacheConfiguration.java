@@ -179,6 +179,9 @@ public class CacheConfiguration {
                                        JHipsterProperties jHipsterProperties) {
             super(uri, cacheManager, provider);
             // register individual caches to make the stats info available.
+            registerPredefinedCache("oAuth2Authentication", new JCache<Object, Object>(
+                cacheManager.getCache("oAuth2Authentication").getAdvancedCache(), this,
+                ConfigurationAdapter.create()));
             registerPredefinedCache(it.intesys.nbaiocco.repository.UserRepository.USERS_BY_LOGIN_CACHE, new JCache<Object, Object>(
                 cacheManager.getCache(it.intesys.nbaiocco.repository.UserRepository.USERS_BY_LOGIN_CACHE).getAdvancedCache(), this,
                 ConfigurationAdapter.create()));

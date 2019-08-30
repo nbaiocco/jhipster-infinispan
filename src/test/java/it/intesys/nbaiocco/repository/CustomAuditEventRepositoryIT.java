@@ -2,6 +2,7 @@ package it.intesys.nbaiocco.repository;
 
 import it.intesys.nbaiocco.JhipsterInfinispanApp;
 import it.intesys.nbaiocco.config.Constants;
+import it.intesys.nbaiocco.config.TestSecurityConfiguration;
 import it.intesys.nbaiocco.config.audit.AuditEventConverter;
 import it.intesys.nbaiocco.domain.PersistentAuditEvent;
 import org.junit.jupiter.api.BeforeEach;
@@ -27,7 +28,7 @@ import static it.intesys.nbaiocco.repository.CustomAuditEventRepository.EVENT_DA
 /**
  * Integration tests for {@link CustomAuditEventRepository}.
  */
-@SpringBootTest(classes = JhipsterInfinispanApp.class)
+@SpringBootTest(classes = {JhipsterInfinispanApp.class, TestSecurityConfiguration.class})
 @Transactional
 public class CustomAuditEventRepositoryIT {
 

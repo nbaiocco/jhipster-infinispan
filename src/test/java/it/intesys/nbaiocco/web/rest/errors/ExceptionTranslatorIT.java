@@ -1,6 +1,7 @@
 package it.intesys.nbaiocco.web.rest.errors;
 
 import it.intesys.nbaiocco.JhipsterInfinispanApp;
+import it.intesys.nbaiocco.config.TestSecurityConfiguration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,7 +20,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /**
  * Integration tests {@link ExceptionTranslator} controller advice.
  */
-@SpringBootTest(classes = JhipsterInfinispanApp.class)
+@SpringBootTest(classes = {JhipsterInfinispanApp.class, TestSecurityConfiguration.class})
 public class ExceptionTranslatorIT {
 
     @Autowired

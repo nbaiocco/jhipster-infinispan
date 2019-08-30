@@ -1,6 +1,7 @@
 package it.intesys.nbaiocco.web.rest;
 
 import it.intesys.nbaiocco.JhipsterInfinispanApp;
+import it.intesys.nbaiocco.config.TestSecurityConfiguration;
 import it.intesys.nbaiocco.config.audit.AuditEventConverter;
 import it.intesys.nbaiocco.domain.PersistentAuditEvent;
 import it.intesys.nbaiocco.repository.PersistenceAuditEventRepository;
@@ -30,7 +31,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /**
  * Integration tests for the {@link AuditResource} REST controller.
  */
-@SpringBootTest(classes = JhipsterInfinispanApp.class)
+@SpringBootTest(classes = {JhipsterInfinispanApp.class, TestSecurityConfiguration.class})
 @Transactional
 public class AuditResourceIT {
 

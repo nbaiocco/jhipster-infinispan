@@ -1,6 +1,7 @@
 package it.intesys.nbaiocco.config.timezone;
 
 import it.intesys.nbaiocco.JhipsterInfinispanApp;
+import it.intesys.nbaiocco.config.TestSecurityConfiguration;
 import it.intesys.nbaiocco.repository.timezone.DateTimeWrapper;
 import it.intesys.nbaiocco.repository.timezone.DateTimeWrapperRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -20,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * Integration tests for the UTC Hibernate configuration.
  */
-@SpringBootTest(classes = JhipsterInfinispanApp.class)
+@SpringBootTest(classes = {JhipsterInfinispanApp.class, TestSecurityConfiguration.class})
 public class HibernateTimeZoneIT {
 
     @Autowired

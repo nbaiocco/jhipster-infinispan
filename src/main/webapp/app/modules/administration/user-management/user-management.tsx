@@ -68,7 +68,7 @@ export class UserManagement extends React.Component<IUserManagementProps, IPagin
             <FontAwesomeIcon icon="plus" /> Create a new user
           </Link>
         </h2>
-        <Table responsive striped aria-describedby="user-management-page-heading">
+        <Table responsive striped>
           <thead>
             <tr>
               <th className="hand" onClick={this.sort('id')}>

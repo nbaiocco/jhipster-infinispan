@@ -9,6 +9,7 @@ import it.intesys.nbaiocco.security.AuthoritiesConstants;
 import it.intesys.nbaiocco.security.SecurityUtils;
 import it.intesys.nbaiocco.service.dto.UserDTO;
 import it.intesys.nbaiocco.service.util.RandomUtil;
+import it.intesys.nbaiocco.web.rest.errors.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -90,7 +91,7 @@ public class UserService {
         userRepository.findOneByLogin(userDTO.getLogin().toLowerCase()).ifPresent(existingUser -> {
             boolean removed = removeNonActivatedUser(existingUser);
             if (!removed) {
-                throw new UsernameAlreadyUsedException();
+                throw new LoginAlreadyUsedException();
             }
         });
         userRepository.findOneByEmailIgnoreCase(userDTO.getEmail()).ifPresent(existingUser -> {

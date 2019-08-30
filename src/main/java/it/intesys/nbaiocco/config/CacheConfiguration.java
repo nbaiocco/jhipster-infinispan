@@ -14,8 +14,12 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.spring.starter.embedded.InfinispanCacheConfigurer;
 import org.infinispan.spring.starter.embedded.InfinispanEmbeddedCacheManagerAutoConfiguration;
 import org.infinispan.spring.starter.embedded.InfinispanGlobalConfigurer;
+import org.infinispan.transaction.TransactionMode;
+import org.infinispan.jcache.embedded.ConfigurationAdapter;
+import org.infinispan.jcache.embedded.JCache;
 import org.infinispan.jcache.embedded.JCacheManager;
 import javax.cache.Caching;
+import javax.cache.spi.CachingProvider;
 import java.net.URI;
 
 @Configuration
@@ -127,34 +131,76 @@ public class CacheConfiguration {
                 .memory().evictionType(EvictionType.COUNT).size(cacheInfo.getReplicated().getMaxEntries()).expiration()
                 .lifespan(cacheInfo.getReplicated().getTimeToLiveSeconds(), TimeUnit.SECONDS).build());
 
-            Stream.of(UserRepository.USERS_BY_LOGIN_CACHE, UserRepository.USERS_BY_EMAIL_CACHE)
-                .forEach(cacheName -> manager.defineConfiguration(cacheName, new ConfigurationBuilder().clustering()
-                    .cacheMode(CacheMode.INVALIDATION_SYNC)
-                    .jmxStatistics()
-                    .enabled(cacheInfo.isStatsEnabled())
-                    .locking()
-                    .concurrencyLevel(1000)
-                    .lockAcquisitionTimeout(15000)
-                    .build()));
+            // initialize Hibernate L2 cache
+            manager.defineConfiguration("entity", new ConfigurationBuilder().clustering().cacheMode(CacheMode.INVALIDATION_SYNC)
+                .jmxStatistics().enabled(cacheInfo.isStatsEnabled())
+                .locking().concurrencyLevel(1000).lockAcquisitionTimeout(15000).build());
+            manager.defineConfiguration("replicated-entity", new ConfigurationBuilder().clustering().cacheMode(CacheMode.REPL_SYNC)
+                .jmxStatistics().enabled(cacheInfo.isStatsEnabled())
+                .locking().concurrencyLevel(1000).lockAcquisitionTimeout(15000).build());
+            manager.defineConfiguration("local-query", new ConfigurationBuilder().clustering().cacheMode(CacheMode.LOCAL)
+                .jmxStatistics().enabled(cacheInfo.isStatsEnabled())
+                .locking().concurrencyLevel(1000).lockAcquisitionTimeout(15000).build());
+            manager.defineConfiguration("replicated-query", new ConfigurationBuilder().clustering().cacheMode(CacheMode.REPL_ASYNC)
+                .jmxStatistics().enabled(cacheInfo.isStatsEnabled())
+                .locking().concurrencyLevel(1000).lockAcquisitionTimeout(15000).build());
+            manager.defineConfiguration("timestamps", new ConfigurationBuilder().clustering().cacheMode(CacheMode.REPL_ASYNC)
+                .jmxStatistics().enabled(cacheInfo.isStatsEnabled())
+                .locking().concurrencyLevel(1000).lockAcquisitionTimeout(15000).build());
+            manager.defineConfiguration("pending-puts", new ConfigurationBuilder().clustering().cacheMode(CacheMode.LOCAL)
+                .jmxStatistics().enabled(cacheInfo.isStatsEnabled())
+                .simpleCache(true).transaction().transactionMode(TransactionMode.NON_TRANSACTIONAL).expiration().maxIdle(60000).build());
 
             setCacheManager(manager);
         };
     }
 
     /**
-    * <p>
-    * Instance of {@link JCacheManager} with cache being managed by the underlying Infinispan layer. This helps to record stats info if enabled and the same is
-    * accessible through {@code MBX:javax.cache,type=CacheStatistics}.
-    * <p>
-    * jCache stats are at instance level. If you need stats at clustering level, then it needs to be retrieved from {@code MBX:org.infinispan}
-    *
-    * @param cacheManager
-    *        the embedded cache manager.
-    * @return the jcache manager.
-    */
+     * <p>
+     * Instance of {@link JCacheManager} with cache being managed by the underlying Infinispan layer. This helps to record stats
+     * info if enabled and the same is accessible through {@code MBX:javax.cache,type=CacheStatistics}.
+     *
+     * <p>
+     * jCache stats are at instance level. If you need stats at clustering level, then it needs to be retrieved from {@code MBX:org.infinispan}
+     *
+     * @param cacheManager the embedded cache manager.
+     * @param jHipsterProperties the jhipster properties to configure from.
+     * @return the jcache manager.
+     */
     @Bean
-    public JCacheManager getJCacheManager(EmbeddedCacheManager cacheManager) {
-        return new JCacheManager(Caching.getCachingProvider().getDefaultURI(), cacheManager, Caching.getCachingProvider());
+    public JCacheManager getJCacheManager(EmbeddedCacheManager cacheManager, JHipsterProperties jHipsterProperties){
+        return new InfinispanJCacheManager(Caching.getCachingProvider().getDefaultURI(), cacheManager,
+            Caching.getCachingProvider(), jHipsterProperties);
+    }
+
+    class InfinispanJCacheManager extends JCacheManager {
+
+        public InfinispanJCacheManager(URI uri, EmbeddedCacheManager cacheManager, CachingProvider provider,
+                                       JHipsterProperties jHipsterProperties) {
+            super(uri, cacheManager, provider);
+            // register individual caches to make the stats info available.
+            registerPredefinedCache(it.intesys.nbaiocco.repository.UserRepository.USERS_BY_LOGIN_CACHE, new JCache<Object, Object>(
+                cacheManager.getCache(it.intesys.nbaiocco.repository.UserRepository.USERS_BY_LOGIN_CACHE).getAdvancedCache(), this,
+                ConfigurationAdapter.create()));
+            registerPredefinedCache(it.intesys.nbaiocco.repository.UserRepository.USERS_BY_EMAIL_CACHE, new JCache<Object, Object>(
+                cacheManager.getCache(it.intesys.nbaiocco.repository.UserRepository.USERS_BY_EMAIL_CACHE).getAdvancedCache(), this,
+                ConfigurationAdapter.create()));
+            registerPredefinedCache(it.intesys.nbaiocco.domain.User.class.getName(), new JCache<Object, Object>(
+                cacheManager.getCache(it.intesys.nbaiocco.domain.User.class.getName()).getAdvancedCache(), this,
+                ConfigurationAdapter.create()));
+            registerPredefinedCache(it.intesys.nbaiocco.domain.Authority.class.getName(), new JCache<Object, Object>(
+                cacheManager.getCache(it.intesys.nbaiocco.domain.Authority.class.getName()).getAdvancedCache(), this,
+                ConfigurationAdapter.create()));
+            registerPredefinedCache(it.intesys.nbaiocco.domain.User.class.getName() + ".authorities", new JCache<Object, Object>(
+                cacheManager.getCache(it.intesys.nbaiocco.domain.User.class.getName() + ".authorities").getAdvancedCache(), this,
+                ConfigurationAdapter.create()));
+            // jhipster-needle-infinispan-add-entry
+            if (jHipsterProperties.getCache().getInfinispan().isStatsEnabled()) {
+                for (String cacheName : cacheManager.getCacheNames()) {
+                    enableStatistics(cacheName, true);
+                }
+            }
+        }
     }
 
 }

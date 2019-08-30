@@ -1,0 +1,17 @@
+version: '2'
+services:
+  jhipsterinfinispan-app:
+    image: jhipsterinfinispan
+    environment:
+      - _JAVA_OPTIONS=-Xmx512m -Xms256m
+      - SPRING_PROFILES_ACTIVE=prod,swagger
+      - MANAGEMENT_METRICS_EXPORT_PROMETHEUS_ENABLED=true
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://jhipsterinfinispan-postgresql:5432/jhipsterInfinispan
+      - JHIPSTER_SLEEP=30 # gives time for other services to boot before the application
+      - JAVA_OPTS=-Djgroups.tcp.address=NON_LOOPBACK -Djava.net.preferIPv4Stack=true
+    ports:
+      - 8080:8080
+  jhipsterinfinispan-postgresql:
+    extends:
+      file: postgresql.yml
+      service: jhipsterinfinispan-postgresql

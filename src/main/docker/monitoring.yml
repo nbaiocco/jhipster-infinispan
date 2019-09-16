@@ -12,7 +12,7 @@ services:
     # grafana/provisioning/datasources/datasource.yml
     network_mode: 'host' # to test locally running service
   jhipsterinfinispan-grafana:
-    image: grafana/grafana:6.3.3
+    image: grafana/grafana:6.3.5
     volumes:
       - ./grafana/provisioning/:/etc/grafana/provisioning/
     environment:

@@ -12,16 +12,12 @@ import java.util.concurrent.TimeUnit;
 import org.infinispan.eviction.EvictionType;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.spring.starter.embedded.InfinispanCacheConfigurer;
-import org.infinispan.spring.starter.embedded.InfinispanEmbeddedCacheManagerAutoConfiguration;
 import org.infinispan.spring.starter.embedded.InfinispanGlobalConfigurer;
-import org.infinispan.jcache.embedded.JCacheManager;
-import javax.cache.Caching;
-import java.net.URI;
+import org.infinispan.transaction.TransactionMode;
 import java.util.stream.Stream;
 
 @Configuration
 @EnableCaching
-@Import(InfinispanEmbeddedCacheManagerAutoConfiguration.class)
 public class CacheConfiguration {
 
     private final Logger log = LoggerFactory.getLogger(CacheConfiguration.class);
@@ -128,6 +124,26 @@ public class CacheConfiguration {
                 .memory().evictionType(EvictionType.COUNT).size(cacheInfo.getReplicated().getMaxEntries()).expiration()
                 .lifespan(cacheInfo.getReplicated().getTimeToLiveSeconds(), TimeUnit.SECONDS).build());
 
+            // initialize Hibernate L2 cache configuration templates
+            manager.defineConfiguration("entity", new ConfigurationBuilder().clustering().cacheMode(CacheMode.INVALIDATION_SYNC)
+                .jmxStatistics().enabled(cacheInfo.isStatsEnabled())
+                .locking().concurrencyLevel(1000).lockAcquisitionTimeout(15000).template(true).build());
+            manager.defineConfiguration("replicated-entity", new ConfigurationBuilder().clustering().cacheMode(CacheMode.REPL_SYNC)
+                .jmxStatistics().enabled(cacheInfo.isStatsEnabled())
+                .locking().concurrencyLevel(1000).lockAcquisitionTimeout(15000).template(true).build());
+            manager.defineConfiguration("local-query", new ConfigurationBuilder().clustering().cacheMode(CacheMode.LOCAL)
+                .jmxStatistics().enabled(cacheInfo.isStatsEnabled())
+                .locking().concurrencyLevel(1000).lockAcquisitionTimeout(15000).template(true).build());
+            manager.defineConfiguration("replicated-query", new ConfigurationBuilder().clustering().cacheMode(CacheMode.REPL_ASYNC)
+                .jmxStatistics().enabled(cacheInfo.isStatsEnabled())
+                .locking().concurrencyLevel(1000).lockAcquisitionTimeout(15000).template(true).build());
+            manager.defineConfiguration("timestamps", new ConfigurationBuilder().clustering().cacheMode(CacheMode.REPL_ASYNC)
+                .jmxStatistics().enabled(cacheInfo.isStatsEnabled())
+                .locking().concurrencyLevel(1000).lockAcquisitionTimeout(15000).template(true).build());
+            manager.defineConfiguration("pending-puts", new ConfigurationBuilder().clustering().cacheMode(CacheMode.LOCAL)
+                .jmxStatistics().enabled(cacheInfo.isStatsEnabled())
+                .simpleCache(true).transaction().transactionMode(TransactionMode.NON_TRANSACTIONAL).expiration().maxIdle(60000).template(true).build());
+
             Stream.of(it.intesys.nbaiocco.repository.UserRepository.USERS_BY_LOGIN_CACHE, it.intesys.nbaiocco.repository.UserRepository.USERS_BY_EMAIL_CACHE)
                 .forEach(cacheName -> manager.defineConfiguration(cacheName, new ConfigurationBuilder().clustering()
                     .cacheMode(CacheMode.INVALIDATION_SYNC)
@@ -140,22 +156,6 @@ public class CacheConfiguration {
 
             setCacheManager(manager);
         };
-    }
-
-    /**
-    * <p>
-    * Instance of {@link JCacheManager} with cache being managed by the underlying Infinispan layer. This helps to record stats info if enabled and the same is
-    * accessible through {@code MBX:javax.cache,type=CacheStatistics}.
-    * <p>
-    * jCache stats are at instance level. If you need stats at clustering level, then it needs to be retrieved from {@code MBX:org.infinispan}
-    *
-    * @param cacheManager
-    *        the embedded cache manager.
-    * @return the jcache manager.
-    */
-    @Bean
-    public JCacheManager getJCacheManager(EmbeddedCacheManager cacheManager) {
-        return new JCacheManager(Caching.getCachingProvider().getDefaultURI(), cacheManager, Caching.getCachingProvider());
     }
 
 }
